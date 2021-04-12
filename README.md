@@ -1,4 +1,4 @@
-# Tinder Auto Swiper
+# Tinder Auto Swipe
 
 **Disclaimer**: using this will get you banned, probably.
 
@@ -9,8 +9,8 @@
 ## Basic setup
 
 ```shell
-git clone
-cd tinder_auto_swiper
+git clone git@github.com:biagiodistefano/tinder-auto-swipe.git
+cd tinder-auto-swipe
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
