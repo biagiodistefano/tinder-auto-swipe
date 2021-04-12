@@ -6,6 +6,7 @@ import regex
 import requests
 from decouple import config
 
+
 BIO_DEALBREAKERS = [
     r"(?<!(no(t looking for( a)?)? ))(long[- ]?term relationships?)",
     r"(?<!(no(t looking for( a)?)? ))(husbands?)",
