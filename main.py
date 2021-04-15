@@ -69,7 +69,7 @@ class HornyFucker:
         for user in self.nearby_users:
             look_human()
             rate_user(user)
-            if user.score > 1:
+            if user.score > 0:
                 if self.super_likes_remaining > 0 or datetime.now() > self.super_likes_remaining_resets:
                     self.superlike(user)
                 elif self.likes_remaining > 0:
