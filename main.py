@@ -1,19 +1,30 @@
+import json
+import os
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep
 
 import regex
-import requests
 from decouple import config
+from tinder import TinderAPI
 
 
-BIO_DEALBREAKERS = [
-    r"(?<!(no(t looking for( a)?)? ))(long[- ]?term relationships?)",
-    r"(?<!(no(t looking for( a)?)? ))(husbands?)",
-    r"(?<!(no(t looking for( a)?)? )|non[- ])(monogamous)",
-    r"vegan",
-    r"(^|\W)(aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)(\W|$)",
-    r"(^|\W)(♈|♉|♊|♋|♌|♍|♎|♏|♐|♑|♒|♓)(\W|$)",
+BIO_SCORES = [
+    # NEGATIVE STUFF
+    (r"(?<!(no(t looking for( a)?)? ))(long[- ]?term relationships?)", -1),
+    (r"(?<!(no(t looking for( a)?)? ))(husbands?)", -5),
+    (r"(?<!(no(t looking for( a)?)? )|non[- ]?)(monogamous)", -3),
+    (r"vegan", -1),  # and I'm vegan myself...
+    (r"(^|\W)(aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)(\W|$)", -1),
+    (r"(^|\W)(♈|♉|♊|♋|♌|♍|♎|♏|♐|♑|♒|♓)(\W|$)", -1),
+
+    # POSITIVE STUFF
+    (r"(no(t looking for( a)?)? )(long[- ]?term relationships?)", +1),
+    (r"non[- ]monogamous", +2),
+    (r"polyamorous", +2),
+    (r"(?<!(no(t looking for( a)?)? ))(hookups?)", +1),
+    (r"open relationships?|offene Beziehung", +1)
+
 ]
 
 
@@ -37,90 +48,88 @@ def look_human():
     sleep(sleep_time)
 
 
-def decide(user):
-    for pattern in BIO_DEALBREAKERS:
-        if match := regex.search(pattern, user.bio):
-            return False, match.group()
-    return True, "Horny"
+def rate_user(user):
+    score = 0
+    for pattern, points in BIO_SCORES:
+        if regex.search(pattern, user.bio):
+            score += points
+    user.score = score
 
 
-class User:
-
-    def __init__(self, user_id, name, gender, bio, birth_date=None):
-        self.user_id = user_id
-        self.name = name
-        self.gender = gender  # 0: man, 1: woman
-        self.bio = bio
-        self.birth_date = datetime.strptime(birth_date, '%Y-%m-%dT%H:%M:%S.%fZ') if birth_date is not None else None
-
-    @property
-    def age(self):
-        if self.birth_date is None:
-            return None
-        x = datetime.today() - self.birth_date
-        return int(x.days / 365.25)
-
-
-class TinderAPI:
-    HOST = 'https://api.gotinder.com'  # base url
-    CORE = HOST + '/v2/recs/core'  # returns list of nearby users
-    PROFILE = HOST + '/v2/profile?include=account%2Cuser'  # returns own profile
-    MATCHES = HOST + '/v2/matches'  # returns matches
-    LIKE = HOST + '/like/{user_id}'  # likes a user
-    DISLIKE = HOST + '/pass/{user_id}'  # passes a user
-
-    def __init__(self, token):
-        self._token = token
+class HornyFucker:
+    def __init__(self, token, save_activity=True):
+        self.api = TinderAPI(token)
         self.nearby_users = []
+        self.likes_remaining = 100
+        self.super_likes_remaining = 5
+        self.super_likes_remaining_resets = datetime.now() + timedelta(days=1)
+        self.save_activity = save_activity
 
-    def get_nearby_users(self):
-        res_temp = self._get(self.CORE).get('data', {}).get('results', [])
-        self.nearby_users = [User(r['user']['_id'], r['user']['name'], r['user']['gender'], r['user'].get('bio', ''),
-                                  r['user'].get('birth_date', None)) for r in res_temp]
-        return self.nearby_users
-
-    def like(self, user_id):
-        r = self._get(self.LIKE.format(user_id=user_id))
-        return r["match"], r["likes_remaining"]
-
-    def dislike(self, user_id):
-        return self._get(self.DISLIKE.format(user_id=user_id))
-
-    def _get(self, url):
-        r = requests.get(url, headers={"X-Auth-Token": self._token})
-        assert r.status_code == 200, f"GET {url} <{r.status_code}>: {r.text}"
-        return r.json()
-
-
-def swipe_loop(api):
-    for u in api.nearby_users:
-        look_human()
-        like, reason = decide(u)
-        if like:
-            print(f"Swiping right on {u.name}", end="...")
-            match, likes_remaining = api.like(u.user_id)
-            if match:
-                print("It's a Match!")
+    def swipe_loop(self):
+        for user in self.nearby_users:
+            look_human()
+            rate_user(user)
+            if user.score > 1:
+                if self.super_likes_remaining > 0 or datetime.now() > self.super_likes_remaining_resets:
+                    self.superlike(user)
+                elif self.likes_remaining > 0:
+                    self.swipe_right(user)
+                else:
+                    print("You ran out of likes!")
+                    return
+            elif user.score < 0:
+                self.swipe_left(user)
+            elif self.likes_remaining > 0:
+                self.swipe_right(user)
             else:
-                print()
-            if likes_remaining < 1:
                 print("You ran out of likes!")
                 return
+
+        print("Getting nearby users", end="...")
+        self.nearby_users = self.api.get_nearby_users()
+        print("Ok.")
+        if len(self.nearby_users) == 0:
+            minutes_to_wait = random.randint(0, 15)
+            print(f"No more potential matches. Waiting for {minutes_to_wait} minutes...")
+            seconds_to_wait = minutes_to_wait * 60
+            countdown(seconds_to_wait)
+        self.swipe_loop()
+
+    def swipe_right(self, user):
+        print(f"Swiping right on {user.name}", end="...")
+        match, self.likes_remaining = self.api.like(user.user_id)
+        if match:
+            print("It's a Match!")
         else:
-            print(f"Swiping left on {u.name} [{reason}]")
-            api.dislike(u.user_id)
-    print("Getting nearby users", end="...")
-    api.get_nearby_users()
-    print("Ok.")
-    if len(api.nearby_users) == 0:
-        minutes_to_wait = random.randint(0, 15)
-        print(f"No more potential matches. Waiting for {minutes_to_wait} minutes...")
-        seconds_to_wait = minutes_to_wait * 60
-        countdown(seconds_to_wait)
-    swipe_loop(api)
+            print()
+        self.save_data("right", user)
+
+    def swipe_left(self, user):
+        print(f"Swiping left on {user.name} [{user.score}]")
+        self.api.dislike(user.user_id)
+        self.save_data("left", user)
+
+    def superlike(self, user):
+        print(f"Super-liking on {user.name} [{user.score}]")
+        match, self.super_likes_remaining, self.super_likes_remaining_resets = self.api.superlike(user.user_id)
+        if match:
+            print("It's a Match!")
+        else:
+            print()
+        self.save_data("superlike", user)
+
+    def save_data(self, where, user):
+        if not self.save_activity:
+            return
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+        data_dir = os.path.join(this_dir, "data", "swipes", where)
+        os.makedirs(data_dir, exist_ok=True)
+        filepath = os.path.join(data_dir, user.user_id + ".json")
+        with open(filepath, "w") as f:
+            f.write(json.dumps(user.__dict__, indent=4))
 
 
 if __name__ == '__main__':
     token_ = config("TINDER_TOKEN")
-    api_ = TinderAPI(token_)
-    swipe_loop(api_)
+    horny_fucker = HornyFucker(token_)
+    horny_fucker.swipe_loop()
