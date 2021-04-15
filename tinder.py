@@ -5,14 +5,16 @@ import requests
 
 class User:
 
-    def __init__(self, user_id, name, gender, bio, full_data, birth_date=None):
+    def __init__(self, user_id, name, gender, bio, birth_date, is_traveling, distance_mi, full_data):
         self.user_id = user_id
         self.name = name
         self.gender = gender  # 0: man, 1: woman
         self.bio = bio
         self.birth_date = birth_date
-        self.score = 0
+        self.is_traveling = is_traveling
         self.full_data = full_data  # full json response
+        self.distance = distance_mi * 1.609344
+        self.score = 0
 
     @property
     def age(self):
@@ -45,8 +47,16 @@ class TinderAPI:
 
     def get_nearby_users(self):
         res_temp = self._get(self.CORE).get('data', {}).get('results', [])
-        return [User(r['user']['_id'], r['user']['name'], r['user']['gender'], r['user'].get('bio', ''),
-                     r, r['user'].get('birth_date', None)) for r in res_temp]
+        return [User(
+            user_id=r['user']['_id'],
+            name=r['user']['name'],
+            gender=r['user']['gender'],
+            bio=r['user'].get('bio', ''),
+            birth_date=r['user'].get('birth_date', None),
+            is_traveling=r['user']['is_traveling'],
+            distance_mi=r["distance_mi"],
+            full_data=r
+        ) for r in res_temp]
 
     def like(self, user_id):
         r = self._get(self.LIKE.format(user_id=user_id))
