@@ -130,7 +130,7 @@ class HornyFucker:
         os.makedirs(data_dir, exist_ok=True)
         filepath = os.path.join(data_dir, user.user_id + ".json")
         with open(filepath, "w") as f:
-            f.write(json.dumps(user.__dict__, indent=4))
+            f.write(json.dumps(user._data, indent=4))
 
 
 if __name__ == '__main__':

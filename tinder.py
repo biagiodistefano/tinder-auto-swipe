@@ -6,9 +6,9 @@ import requests
 class User:
 
     def __init__(self, data):
-        self._data = data  # full json response
         self.score = 0
         self.points = []
+        self._data = data  # full json response
 
     @property
     def user_id(self):
