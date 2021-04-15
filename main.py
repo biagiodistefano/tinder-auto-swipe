@@ -77,7 +77,7 @@ class HornyFucker:
 
     def swipe_loop(self):
         for user in self.nearby_users:
-            look_human()
+            look_human(user)
             rate_user(user)
             if user.score > 0:
                 if self.super_likes_remaining > 0 or datetime.now() > self.super_likes_remaining_resets:
