@@ -51,12 +51,15 @@ def look_human():
 def rate_user(user):
     score = 0
     for pattern, points in BIO_SCORES:
-        if regex.search(pattern, user.bio):
+        if match := regex.search(pattern, user.bio):
             score += points
+            user.points.append((match.group(), points))
     if user.is_traveling:
         score -= 1
+        user.points.append(("is_traveling", -1))
     if user.distance > 50:
         score -= 1
+        user.points.append(("distance > 50km", -1))
     user.score = score
 
 

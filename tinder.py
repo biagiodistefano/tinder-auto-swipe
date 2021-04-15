@@ -15,6 +15,7 @@ class User:
         self.full_data = full_data  # full json response
         self.distance = distance_mi * 1.609344
         self.score = 0
+        self.points = []
 
     @property
     def age(self):
