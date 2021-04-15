@@ -112,12 +112,12 @@ class HornyFucker:
         self.save_data("right", user)
 
     def swipe_left(self, user):
-        print(f"Swiping left on {user.name} [{user.score}]")
+        print(f"Swiping left on {user.name} | SCORE: {user.score} | POINTS: {user.points}")
         self.api.dislike(user.user_id)
         self.save_data("left", user)
 
     def superlike(self, user):
-        print(f"Super-liking on {user.name} [{user.score}]")
+        print(f"Super-liking on {user.name} | SCORE: {user.score} | POINTS: {user.points}")
         match, self.super_likes_remaining, self.super_likes_remaining_resets = self.api.superlike(user.user_id)
         if match:
             print("It's a Match!")
