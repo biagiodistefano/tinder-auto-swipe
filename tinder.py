@@ -5,17 +5,38 @@ import requests
 
 class User:
 
-    def __init__(self, user_id, name, gender, bio, birth_date, is_traveling, distance_mi, full_data):
-        self.user_id = user_id
-        self.name = name
-        self.gender = gender  # 0: man, 1: woman
-        self.bio = bio
-        self.birth_date = birth_date
-        self.is_traveling = is_traveling
-        self.full_data = full_data  # full json response
-        self.distance = distance_mi * 1.609344
+    def __init__(self, data):
+        self._data = data  # full json response
         self.score = 0
         self.points = []
+
+    @property
+    def user_id(self):
+        return self._data['user']['_id']
+
+    @property
+    def name(self):
+        return self._data['user']['name']
+
+    @property
+    def gender(self):
+        return self._data['user']['gender']
+
+    @property
+    def bio(self):
+        return self._data['user']['bio']
+
+    @property
+    def birth_date(self):
+        return self._data['user'].get('birth_date')
+
+    @property
+    def is_traveling(self):
+        return self._data['user'].get('is_traveling', False)
+
+    @property
+    def distance(self):
+        return self._data.get("distance_mi", 0) * 1.609344
 
     @property
     def age(self):
@@ -27,7 +48,7 @@ class User:
 
     @property
     def photos(self):
-        return self.full_data["user"]["photos"]
+        return self._data["user"]["photos"]
 
 
 # documentation here: https://github.com/fbessez/Tinder
@@ -51,17 +72,7 @@ class TinderAPI:
         self._token = token
 
     def get_nearby_users(self):
-        res_temp = self._get(self.CORE).get('data', {}).get('results', [])
-        return [User(
-            user_id=r['user']['_id'],
-            name=r['user']['name'],
-            gender=r['user']['gender'],
-            bio=r['user']['bio'],
-            birth_date=r['user'].get('birth_date', None),
-            is_traveling=r['user'].get('is_traveling', False),
-            distance_mi=r.get("distance_mi", 0),
-            full_data=r
-        ) for r in res_temp]
+        return [User(r) for r in self._get(self.CORE).get('data', {}).get('results', [])]
 
     def like(self, user_id):
         r = self._get(self.LIKE.format(user_id=user_id))
@@ -119,5 +130,5 @@ class TinderAPI:
 
 
 if __name__ == '__main__':
-    token = input("Enter your token: ")
-    api = TinderAPI(token)
+    token_ = input("Enter your token: ")
+    api = TinderAPI(token_)
