@@ -54,7 +54,7 @@ def rate_user(user):
     for pattern, points in BIO_SCORES:
         if match := regex.search(pattern, user.bio):
             score += points
-            user.points.append((match.group(), points))
+            user.points.append((match.group().strip(), points))
     if user.is_traveling:
         score -= 1
         user.points.append(("is_traveling", -1))
