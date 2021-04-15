@@ -35,7 +35,7 @@ class TinderAPI:
     MATCHES = HOST + '/v2/matches'  # returns matches
     LIKE = HOST + '/like/{user_id}'  # likes a user
     DISLIKE = HOST + '/pass/{user_id}'  # passes a user
-    SUPERLIKE = HOST + '/like/{user_id}/super'  # superlikes a user
+    SUPERLIKE = LIKE + '/super'  # superlikes a user
     USER = HOST + '/user/{user_id}'  # gets user's profile
     PING = HOST + '/ping'  # update location
     TRAVEL = HOST + '/passport/user/travel'  # passport to new location
