@@ -26,7 +26,7 @@ class User:
         return int(x.days / 365.25)
 
 
-# documentation here: https://gist.github.com/rtt/10403467
+# documentation here: https://github.com/fbessez/Tinder
 
 class TinderAPI:
     HOST = 'https://api.gotinder.com'  # base url
@@ -35,7 +35,7 @@ class TinderAPI:
     MATCHES = HOST + '/v2/matches'  # returns matches
     LIKE = HOST + '/like/{user_id}'  # likes a user
     DISLIKE = HOST + '/pass/{user_id}'  # passes a user
-    SUPERLIKE = HOST + LIKE + '/super'  # superlikes a user
+    SUPERLIKE = HOST + '/like/{user_id}/super'  # superlikes a user
     USER = HOST + '/user/{user_id}'  # gets user's profile
     PING = HOST + '/ping'  # update location
     TRAVEL = HOST + '/passport/user/travel'  # passport to new location
