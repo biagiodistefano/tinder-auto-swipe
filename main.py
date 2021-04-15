@@ -17,6 +17,7 @@ BIO_SCORES = [
     (r"vegan", -1),  # and I'm vegan myself...
     (r"(^|\W)(aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)(\W|$)", -1),
     (r"(♈|♉|♊|♋|♌|♍|♎|♏|♐|♑|♒|♓)", -1),
+    (r"add me on (ig|(insta(gram)?))", -1),
 
     # POSITIVE STUFF
     (r"(no(t looking for( a)?)? )(long[- ]?term relationships?)", +1),
@@ -39,11 +40,12 @@ def countdown(t):
     sleep(random.random())
 
 
-def look_human():
-    base_sleep = 0  # random.randint(0, 2)
-    if random.random() > 0.8:
-        base_sleep = random.randint(3, 5)
-    sleep_time = base_sleep + random.random()
+def look_human(user):
+    sleep_time = random.random()
+    if random.randint(0, 1):
+        sleep_time += random.randint(0, len(user.photos)) * random.random()  # extra time to look at pictures
+    if random.randint(0, 1):
+        sleep_time += len(user.bio) * (random.randint(2, 5)/100)  # extra time to read bio
     if sleep_time < 0.2:
         sleep_time = 0.2
     sleep(sleep_time)
