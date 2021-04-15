@@ -37,5 +37,5 @@ python main.py
 
 ## CUSTOMISE YOUR PREFERENCES
 
-* Add regexes to `BIO_DEALBREAKERS`
-* Add logic to `decide(user)`  (it returns `True|False, "reason"`)
+* Add regexes to `BIO_SCORES` in `main.py`
+* Add logic to `rate_user(user)`
