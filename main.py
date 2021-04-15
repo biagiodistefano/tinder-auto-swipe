@@ -118,7 +118,7 @@ class HornyFucker:
         self.save_data("left", user)
 
     def superlike(self, user):
-        print(f"Super-liking on {user.name} | SCORE: {user.score} | POINTS: {user.points}")
+        print(f"Super-liking on {user.name} | SCORE: {user.score} | POINTS: {user.points}", end="...")
         match, self.super_likes_remaining, self.super_likes_remaining_resets = self.api.superlike(user.user_id)
         if match:
             print("It's a Match!")
