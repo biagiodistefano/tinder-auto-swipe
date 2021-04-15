@@ -53,8 +53,8 @@ class TinderAPI:
             gender=r['user']['gender'],
             bio=r['user'].get('bio', ''),
             birth_date=r['user'].get('birth_date', None),
-            is_traveling=r['user']['is_traveling'],
-            distance_mi=r["distance_mi"],
+            is_traveling=r['user'].get('is_traveling', False),
+            distance_mi=r.get("distance_mi", 0),
             full_data=r
         ) for r in res_temp]
 
