@@ -25,6 +25,10 @@ class User:
         x = datetime.today() - birth_date
         return int(x.days / 365.25)
 
+    @property
+    def photos(self):
+        return self.full_data["user"]["photos"]
+
 
 # documentation here: https://github.com/fbessez/Tinder
 
@@ -52,7 +56,7 @@ class TinderAPI:
             user_id=r['user']['_id'],
             name=r['user']['name'],
             gender=r['user']['gender'],
-            bio=r['user'].get('bio', ''),
+            bio=r['user']['bio'],
             birth_date=r['user'].get('birth_date', None),
             is_traveling=r['user'].get('is_traveling', False),
             distance_mi=r.get("distance_mi", 0),
