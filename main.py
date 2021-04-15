@@ -16,15 +16,16 @@ BIO_SCORES = [
     (r"(?<!(no(t looking for( a)?)? )|non[- ]?)(monogamous)", -3),
     (r"vegan", -1),  # and I'm vegan myself...
     (r"(^|\W)(aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)(\W|$)", -1),
-    (r"(^|\W)(♈|♉|♊|♋|♌|♍|♎|♏|♐|♑|♒|♓)(\W|$)", -1),
+    (r"(♈|♉|♊|♋|♌|♍|♎|♏|♐|♑|♒|♓)", -1),
 
     # POSITIVE STUFF
     (r"(no(t looking for( a)?)? )(long[- ]?term relationships?)", +1),
     (r"non[- ]monogamous", +2),
     (r"polyamorous", +2),
+    (r"(^|\W)(poly)(\W|$)", +2),
     (r"(?<!(no(t looking for( a)?)? ))(hookups?)", +1),
-    (r"open relationships?|offene Beziehung", +1)
-
+    (r"open relationships?|offene Beziehung", +1),
+    (r"falafel", +10),
 ]
 
 
