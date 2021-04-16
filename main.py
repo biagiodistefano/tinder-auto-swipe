@@ -1,13 +1,14 @@
 import json
 import os
 import random
+import sys
 from datetime import datetime, timedelta
 from time import sleep
 
 import regex
 from decouple import config
-from tinder import TinderAPI
 
+from tinder import TinderAPI, User
 
 BIO_SCORES = [
     # NEGATIVE STUFF
@@ -17,7 +18,7 @@ BIO_SCORES = [
     (r"vegan", -1),  # and I'm vegan myself...
     (r"(^|\W)(aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)(\W|$)", -1),
     (r"(♈|♉|♊|♋|♌|♍|♎|♏|♐|♑|♒|♓)", -1),
-    (r"add me on (ig|(insta(gram)?))", -1),
+    (r"(add|follow) me (on )?(ig|(insta(gram)?))", -1),
 
     # POSITIVE STUFF
     (r"(no(t looking for( a)?)? )(long[- ]?term relationships?)", +1),
@@ -26,7 +27,9 @@ BIO_SCORES = [
     (r"(^|\W)(poly)(\W|$)", +2),
     (r"(?<!(no(t looking for( a)?)? ))(hookups?)", +1),
     (r"open relationships?|offene Beziehung", +1),
-    (r"falafel", +10),
+    (r"falafels?", +10),
+    (r"sex[- ]?positive", +2),
+    (r"kinky", +2)
 ]
 
 
@@ -45,7 +48,7 @@ def look_human(user):
     if random.randint(0, 1):
         sleep_time += random.randint(0, len(user.photos)) * random.random()  # extra time to look at pictures
     if random.randint(0, 1):
-        sleep_time += len(user.bio) * (random.randint(2, 5)/100)  # extra time to read bio
+        sleep_time += len(user.bio) * (random.randint(2, 5) / 100)  # extra time to read bio
     if sleep_time < 0.2:
         sleep_time = 0.2
     sleep(sleep_time)
@@ -94,7 +97,6 @@ class HornyFucker:
             else:
                 print("You ran out of likes!")
                 return
-
         print("Getting nearby users", end="...")
         self.nearby_users = self.api.get_nearby_users()
         print("Ok.")
@@ -133,7 +135,33 @@ class HornyFucker:
             f.write(json.dumps(user.__dict__, indent=4))
 
 
+def photo_browser(which):
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    data_dir = os.path.join(this_dir, "data", "swipes", which)
+    for filename in os.listdir(data_dir):
+        if not filename.endswith(".json"):
+            continue
+        filepath = os.path.join(data_dir, filename)
+        with open(filepath, "rb") as f:
+            user_json = json.load(f)
+        user_data = user_json.get("full_data", user_json.get("_data"))
+        user = User(user_data)
+        if user_json.get("score") is not None:
+            user.score = user_json.get("score")
+        if user_json.get("points") is not None:
+            user.points = user_json.get("points")
+        print(user.name)
+        for photo in user.photos:
+            url = photo["url"].split("?")[0]
+            print(f"opening {url}")
+            os.system(f"open {url}")
+            sleep(1)
+        print()
+        input("Press enter for next user")
+
+
 if __name__ == '__main__':
     token_ = config("TINDER_TOKEN")
     horny_fucker = HornyFucker(token_)
-    horny_fucker.swipe_loop()
+    if not sys.flags.interactive:
+        horny_fucker.swipe_loop()
