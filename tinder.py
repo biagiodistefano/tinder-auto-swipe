@@ -5,34 +5,38 @@ import requests
 
 class User:
 
-    def __init__(self, data):
-        self.score = 0
-        self.points = []
+    def __init__(self, data, score=None, points=None):
+        self.score = score if score is not None else 0
+        self.points = points if points is not None else []
         self._data = data  # full json response
 
     @property
+    def user(self):
+        return self._data["user"]
+
+    @property
     def user_id(self):
-        return self._data['user']['_id']
+        return self.user['_id']
 
     @property
     def name(self):
-        return self._data['user']['name']
+        return self.user['name']
 
     @property
     def gender(self):
-        return self._data['user']['gender']
+        return self.user['gender']
 
     @property
     def bio(self):
-        return self._data['user']['bio']
+        return self.user['bio']
 
     @property
     def birth_date(self):
-        return self._data['user'].get('birth_date')
+        return self.user.get('birth_date')
 
     @property
     def is_traveling(self):
-        return self._data['user'].get('is_traveling', False)
+        return self.user.get('is_traveling', False)
 
     @property
     def distance(self):
@@ -48,7 +52,23 @@ class User:
 
     @property
     def photos(self):
-        return self._data["user"]["photos"]
+        return self.user["photos"]
+
+    @property
+    def sexual_orientations(self):
+        return [so["id"] for so in self.user.get("sexual_orientations", [])]
+
+    @property
+    def is_bisexual(self):
+        return "bi" in self.sexual_orientations
+
+    @property
+    def is_pansexual(self):
+        return "pan" in self.sexual_orientations
+
+    @property
+    def is_straight(self):
+        return "str" in self.sexual_orientations
 
 
 # documentation here: https://github.com/fbessez/Tinder
@@ -65,11 +85,15 @@ class TinderAPI:
     PING = HOST + '/ping'  # update location
     TRAVEL = HOST + '/passport/user/travel'  # passport to new location
     META = HOST + '/v2/meta'  # gets own metadata
-    MATCH = HOST + '/user/matches/match_id'  # unmathces
+    MATCH = HOST + '/user/matches/{match_id}'  # unmathces
     UPDATES = HOST + '/updates'
+    SHARE_PROFILE = HOST + '/user/{user_id}/share'
 
     def __init__(self, token):
         self._token = token
+
+    def profile(self):
+        return self._get(self.PROFILE)
 
     def get_nearby_users(self):
         return [User(r) for r in self._get(self.CORE).get('data', {}).get('results', [])]
@@ -85,16 +109,17 @@ class TinderAPI:
         r = self._post(self.SUPERLIKE.format(user_id=user_id))
         return (r["match"],
                 r["super_likes"]["remaining"],
-                datetime.strptime(r["super_likes"]["resets_at"], '%Y-%m-%dT%H:%M:%S.%fZ'))
+                datetime.strptime(r["super_likes"].get("resets_at", datetime.now()), '%Y-%m-%dT%H:%M:%S.%fZ'))
 
     def matches(self, count=50):
         return self._get(self.MATCHES, count=count)
 
-    def send_message(self, user_id, text):
-        return self._post(self.MATCHES + f"/{user_id}", text=text)
+    def send_message(self, match_id, message, **kwargs):
+        kwargs["message"] = message
+        return self._post(self.MATCHES + f"/{match_id}", **kwargs)
 
     def get_user(self, user_id):
-        return self._get(self.USER.format(user_id))
+        return self._get(self.USER.format(user_id=user_id))
 
     def update_location(self, lat, lon):
         return self._post(self.PING, lat=lat, lon=lon)
@@ -104,11 +129,14 @@ class TinderAPI:
         return self._post(self.TRAVEL, lat=lat, lon=lon)
 
     def unmatch(self, match_id):
-        return self._delete(self.MATCH.format(match_id))
+        return self._delete(self.MATCH.format(match_id=match_id))
 
     def updates(self, last_activity_date: datetime):
         last_activity_date = last_activity_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         return self._post(self.UPDATES, last_activity_date=last_activity_date)
+
+    def share(self, user_id):
+        return self._post(self.SHARE_PROFILE.format(user_id=user_id))["link"]
 
     def meta(self):
         return self._get(self.META)
