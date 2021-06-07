@@ -107,9 +107,14 @@ class TinderAPI:
 
     def superlike(self, user_id):
         r = self._post(self.SUPERLIKE.format(user_id=user_id))
+        resets_at = r["super_likes"].get("resets_at")
+        if resets_at is not None:
+        	resets_at = datetime.strptime(resets_at, '%Y-%m-%dT%H:%M:%S.%fZ')
+        else:
+        	resets_at = datetime.now()
         return (r["match"],
                 r["super_likes"]["remaining"],
-                datetime.strptime(r["super_likes"].get("resets_at", datetime.now()), '%Y-%m-%dT%H:%M:%S.%fZ'))
+                resets_at)
 
     def matches(self, count=50):
         return self._get(self.MATCHES, count=count)
