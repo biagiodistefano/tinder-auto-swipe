@@ -112,8 +112,8 @@ class TinderAPI:
         	resets_at = datetime.strptime(resets_at, '%Y-%m-%dT%H:%M:%S.%fZ')
         else:
         	resets_at = datetime.now()
-        return (r["match"],
-                r["super_likes"]["remaining"],
+        return (r.get("match"),
+                r.get("super_likes", {}).get("remaining", 0),
                 resets_at)
 
     def matches(self, count=50):
