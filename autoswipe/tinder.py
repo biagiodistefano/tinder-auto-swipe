@@ -51,11 +51,10 @@ class User:
 
     @property
     def age(self) -> Union[int, None]:
-        bd = self.birth_date
-        if bd is None:
-            return None
-        x = datetime.today() - bd
-        return int(x.days / 365.25)
+        if bd := self.birth_date:
+            x = datetime.today() - bd
+            return int(x.days / 365.25)
+        return None
 
     @property
     def photos(self) -> List[dict]:

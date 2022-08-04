@@ -31,7 +31,7 @@ python main.py --token <X-Auth-Token> [--surge] [--save] [--data-dir <path/to/da
 
 ### Params
 * `token`: the Auth token for Tinder (perform login separately as explained above, I'm too lazy to program the login myself, but PRs are welcome)
-* `surge`: will wait only `0.3` seconds between swipes
+* `surge`: will only wait for `0.3` seconds between swipes
 * `save`: will save activity locally (users' data and photos)
 * `data-dir`: specify where tos ave users' data. Defaults to `./data`
 
