@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import random
 import regex
@@ -11,6 +12,10 @@ import geocoder
 import requests
 
 from .tinder import TinderAPI, User
+from .utils import setup_logger
+
+
+logger = setup_logger("horny_fucker", to_terminal_level=logging.INFO)
 
 
 BIO_SCORES = [
@@ -86,43 +91,44 @@ class HornyFucker:
                 elif self.likes_remaining > 0:
                     self.swipe_right(user)
                 else:
-                    print("You ran out of likes!")
+                    logger.info("You ran out of likes!")
                     return
             elif user.score < 0:
                 self.swipe_left(user)
             elif self.likes_remaining > 0:
                 self.swipe_right(user)
             else:
-                print("You ran out of likes!")
+                logger.info("You ran out of likes!")
                 return
-        print(f"Getting nearby users in {self.city}", end="...", flush=True)
+        logger.info(f"Getting nearby users in {self.city}")
         self.nearby_users = self.api.get_nearby_users()
-        print("Ok.")
         if len(self.nearby_users) == 0:
             minutes_to_wait = random.randint(0, 15)
-            print(f"No more potential matches. Waiting for {minutes_to_wait} minutes...")
+            logger.info(f"No more potential matches. Waiting for {minutes_to_wait} minutes...")
             seconds_to_wait = minutes_to_wait * 60
             self.countdown(seconds_to_wait)
         self.swipe_loop()
 
     def swipe_right(self, user: User):
-        print(f"Swiping right on {user.name}", end="...", flush=True)
+        logger.info(f"Swiping right on {user.name}")
         try:
             match, self.likes_remaining = self.api.like(user.user_id)
-            print("It's a match!") if match else print()
+            if match:
+                logger.info("It's a match!")
         except KeyError:
             pass
         self.save_swipe("right", user)
 
     def swipe_left(self, user: User):
-        print(f"Swiping left on {user.name}")
+        logger.info(f"Swiping left on {user.name}")
         self.api.dislike(user.user_id)
         self.save_swipe("left", user)
 
     def superlike(self, user: User):
-        print(f"Super-liking {user.name}", end="...", flush=True)
+        logger.info(f"Super-liking {user.name}")
         match, self.super_likes_remaining, self.super_likes_remaining_resets = self.api.superlike(user.user_id)
-        print("It's a match!") if match else print()
+        if match:
+            logger.info("It's a match!")
         self.save_swipe("superlike", user)
 
     def save_swipe(self, where: str, user: User):
@@ -157,8 +163,8 @@ class HornyFucker:
                 filepath = os.path.join(photo_dir, filename)
                 with open(filepath, "wb") as f:
                     f.write(r.content)
-            except AssertionError:
-                pass
+            except AssertionError as e:
+                logger.error(f"Could not download photo: {e}")
             if not surge:
                 sleep(random.random() * random.randint(0, 2))
 
