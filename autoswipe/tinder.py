@@ -1,73 +1,80 @@
-from datetime import datetime
+from datetime import date, datetime
+from typing import List, Tuple, Union
 
 import requests
 
 
 class User:
 
-    def __init__(self, data, score=None, points=None):
+    def __init__(
+        self,data: dict,
+        score: int = None,
+        points: List[Tuple[str, int]] = None
+    ):
         self.score = score if score is not None else 0
         self.points = points if points is not None else []
-        self._data = data  # full json response
+        self._data = data
 
     @property
-    def user(self):
+    def user(self) -> dict:
         return self._data["user"]
 
     @property
-    def user_id(self):
+    def user_id(self) -> str:
         return self.user['_id']
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.user['name']
 
     @property
-    def gender(self):
+    def gender(self) -> int:
         return self.user['gender']
 
     @property
-    def bio(self):
+    def bio(self) -> str:
         return self.user['bio']
 
     @property
-    def birth_date(self):
-        return self.user.get('birth_date')
+    def birth_date(self) -> Union[date, None]:
+        if bd := self.user.get('birth_date'):
+            return datetime.strptime(bd, '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        return None
 
     @property
-    def is_traveling(self):
+    def is_traveling(self) -> bool:
         return self.user.get('is_traveling', False)
 
     @property
-    def distance(self):
+    def distance(self) -> float:
         return self._data.get("distance_mi", 0) * 1.609344
 
     @property
-    def age(self):
-        if self.birth_date is None:
+    def age(self) -> Union[int, None]:
+        bd = self.birth_date
+        if bd is None:
             return None
-        birth_date = datetime.strptime(self.birth_date, '%Y-%m-%dT%H:%M:%S.%fZ')
-        x = datetime.today() - birth_date
+        x = datetime.today() - bd
         return int(x.days / 365.25)
 
     @property
-    def photos(self):
+    def photos(self) -> List[dict]:
         return self.user["photos"]
 
     @property
-    def sexual_orientations(self):
+    def sexual_orientations(self) -> List[str]:
         return [so["id"] for so in self.user.get("sexual_orientations", [])]
 
     @property
-    def is_bisexual(self):
+    def is_bisexual(self) -> bool:
         return "bi" in self.sexual_orientations
 
     @property
-    def is_pansexual(self):
+    def is_pansexual(self) -> bool:
         return "pan" in self.sexual_orientations
 
     @property
-    def is_straight(self):
+    def is_straight(self) -> bool:
         return "str" in self.sexual_orientations
 
 
@@ -98,55 +105,55 @@ class TinderAPI:
     def get_nearby_users(self):
         return [User(r) for r in self._get(self.CORE).get('data', {}).get('results', [])]
 
-    def like(self, user_id):
+    def like(self, user_id) -> Tuple[bool, int]:
         r = self._get(self.LIKE.format(user_id=user_id))
         return r["match"], r["likes_remaining"]
 
-    def dislike(self, user_id):
+    def dislike(self, user_id) -> dict:
         return self._get(self.DISLIKE.format(user_id=user_id))
 
-    def superlike(self, user_id):
+    def superlike(self, user_id) -> Tuple[bool, int, datetime]:
         r = self._post(self.SUPERLIKE.format(user_id=user_id))
         resets_at = r["super_likes"].get("resets_at")
         if resets_at is not None:
-        	resets_at = datetime.strptime(resets_at, '%Y-%m-%dT%H:%M:%S.%fZ')
+            resets_at = datetime.strptime(resets_at, '%Y-%m-%dT%H:%M:%S.%fZ')
         else:
-        	resets_at = datetime.now()
+            resets_at = datetime.now()
         return (r.get("match"),
                 r.get("super_likes", {}).get("remaining", 0),
                 resets_at)
 
-    def matches(self, count=50):
+    def matches(self, count: int = 50) -> dict:
         return self._get(self.MATCHES, count=count)
 
-    def send_message(self, match_id, message, **kwargs):
+    def send_message(self, match_id, message, **kwargs) -> dict:
         kwargs["message"] = message
         return self._post(self.MATCHES + f"/{match_id}", **kwargs)
 
-    def get_user(self, user_id):
+    def get_user(self, user_id) -> dict:
         return self._get(self.USER.format(user_id=user_id))
 
-    def update_location(self, lat, lon):
+    def update_location(self, lat: str, lon: str) -> dict:
         return self._post(self.PING, lat=lat, lon=lon)
 
-    def travel(self, lat, lon):
+    def travel(self, lat: str, lon: str) -> dict:
         """Tinder Plus Only"""
         return self._post(self.TRAVEL, lat=lat, lon=lon)
 
-    def unmatch(self, match_id):
+    def unmatch(self, match_id: str) -> dict:
         return self._delete(self.MATCH.format(match_id=match_id))
 
-    def updates(self, last_activity_date: datetime):
+    def updates(self, last_activity_date: datetime) -> dict:
         last_activity_date = last_activity_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         return self._post(self.UPDATES, last_activity_date=last_activity_date)
 
-    def share(self, user_id):
+    def share(self, user_id: str) -> dict:
         return self._post(self.SHARE_PROFILE.format(user_id=user_id))["link"]
 
-    def meta(self):
+    def meta(self) -> dict:
         return self._get(self.META)
 
-    def _get(self, url, **params):
+    def _get(self, url, **params) -> dict:
         r = requests.get(url, params=params, headers={"X-Auth-Token": self._token})
         assert r.status_code == 200, f"GET {url} <{r.status_code}>: {r.text}"
         return r.json()
@@ -156,7 +163,7 @@ class TinderAPI:
         assert r.status_code == 200, f"POST {url} <{r.status_code}>: {r.text}"
         return r.json()
 
-    def _delete(self, url):
+    def _delete(self, url) -> dict:
         r = requests.delete(url, headers={"X-Auth-Token": self._token})
         assert r.status_code == 200, f"DELETE {url} <{r.status_code}>: {r.text}"
         return r.json()

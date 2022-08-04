@@ -142,3 +142,4 @@ cython_debug/
 .DS_Store
 tmp.json
 data/
+GUIDE.md
