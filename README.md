@@ -23,17 +23,17 @@ pip install -r requirements.txt
 * Check out the request on the XHR tab, go to headers
 * Copy the value of `X-Auth-Token`
 
-Now run
+## Run
 
 ```shell
 python main.py --token <X-Auth-Token> [--surge] [--save] [--data-dir <path/to/data/dir>]
 ```
 
-### Params
-* `token`: the Auth token for Tinder (perform login separately as explained above, I'm too lazy to program the login myself, but PRs are welcome)
-* `surge`: will only wait for `0.3` seconds between swipes
-* `save`: will save activity locally (users' data and photos)
-* `data-dir`: specify where tos ave users' data. Defaults to `./data`
+**Params**
+* `--token`: the Auth token for Tinder (perform login separately as explained above, I'm too lazy to program the login myself, but PRs are welcome)
+* `--surge`: will only wait for `0.3` seconds between swipes
+* `--save`: will save activity locally (users' data and photos)
+* `--data-dir`: specify where to save users' data. Defaults to `./data`
 
 ## CUSTOMISE YOUR PREFERENCES
 
