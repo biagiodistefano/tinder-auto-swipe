@@ -89,6 +89,7 @@ class HornyFucker:
                 if self.super_likes_remaining > 0 or datetime.now() > self.super_likes_remaining_resets:
                     self.superlike(user)
                 elif self.likes_remaining > 0:
+                    logger.info(f"Cannot super-like {user.name}. Swiping right. Score: {user.score} | Points: {user.points}")
                     self.swipe_right(user)
                 else:
                     logger.info("You ran out of likes!")
@@ -102,7 +103,7 @@ class HornyFucker:
                 return
         logger.info(f"Getting nearby users in {self.city}")
         self.nearby_users = self.api.get_nearby_users()
-        if len(self.nearby_users) == 0:
+        if not self.nearby_users:
             minutes_to_wait = random.randint(0, 15)
             logger.info(f"No more potential matches. Waiting for {minutes_to_wait} minutes...")
             seconds_to_wait = minutes_to_wait * 60
@@ -143,7 +144,7 @@ class HornyFucker:
         return self.api.share(user.user_id)
     
     @staticmethod
-    def write_json(filepath: Path, data: json):
+    def write_json(filepath: Path, data: dict):
         with filepath.open("w") as f:
             f.write(json.dumps(data, indent=4, ensure_ascii=False))
 
