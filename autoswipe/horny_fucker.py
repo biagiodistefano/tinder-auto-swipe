@@ -63,9 +63,12 @@ class HornyFucker:
         self.super_likes_remaining_resets = datetime.now() + timedelta(days=1)
         self.save_activity = save_activity
         self.profile, self.meta = self.get_own_data()
-        pos = (self.profile["user"]["pos"]["lat"], self.profile["user"]["pos"]["lon"])
-        loc = geocoder.reverse(pos, provider="osm")
-        self.city = str(loc.current_result.city)
+        try:
+            pos = (self.profile["user"]["pos"]["lat"], self.profile["user"]["pos"]["lon"])
+            loc = geocoder.reverse(pos, provider="osm")
+            self.city = str(loc.current_result.city)
+        except Exception:
+            self.city = str(self.profile["user"]["city"]["name"])
 
     def get_own_data(self) -> Tuple[dict, dict]:
         profile = self.api.profile().get("data")
