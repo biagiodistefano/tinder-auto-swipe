@@ -1,5 +1,6 @@
 from datetime import date, datetime
-from typing import List, Tuple, Union
+from functools import cached_property
+from typing import Any, Dict, List, Tuple, Union
 
 import requests
 
@@ -7,7 +8,8 @@ import requests
 class User:
 
     def __init__(
-        self,data: dict,
+        self,
+        data: dict,
         score: int = None,
         points: List[Tuple[str, int]] = None
     ):
@@ -35,7 +37,7 @@ class User:
     def bio(self) -> str:
         return self.user['bio']
 
-    @property
+    @cached_property
     def birth_date(self) -> Union[date, None]:
         if bd := self.user.get('birth_date'):
             return datetime.strptime(bd, '%Y-%m-%dT%H:%M:%S.%fZ').date()
@@ -45,14 +47,14 @@ class User:
     def is_traveling(self) -> bool:
         return self.user.get('is_traveling', False)
 
-    @property
+    @cached_property
     def distance(self) -> float:
         return self._data.get("distance_mi", 0) * 1.609344
 
-    @property
+    @cached_property
     def age(self) -> Union[int, None]:
         if bd := self.birth_date:
-            x = datetime.today() - bd
+            x = datetime.today().date() - bd
             return int(x.days / 365.25)
         return None
 
@@ -60,21 +62,56 @@ class User:
     def photos(self) -> List[dict]:
         return self.user["photos"]
 
-    @property
+    @cached_property
     def sexual_orientations(self) -> List[str]:
         return [so["id"] for so in self.user.get("sexual_orientations", [])]
 
-    @property
+    @cached_property
     def is_bisexual(self) -> bool:
         return "bi" in self.sexual_orientations
 
-    @property
+    @cached_property
     def is_pansexual(self) -> bool:
         return "pan" in self.sexual_orientations
 
-    @property
+    @cached_property
     def is_straight(self) -> bool:
         return "str" in self.sexual_orientations
+
+    @cached_property
+    def interests(self) -> List[str]:
+        return [i["name"].lower() for i in self.user.get("user_interests", {}).get("selected_interests", [])]
+
+    def is_interested_in(self, interest: str) -> bool:
+        return interest.lower() in self.interests
+
+    @property
+    def selected_descriptors(self) -> List[Dict[str, Any]]:
+        return self.user.get("selected_descriptors", [])
+
+    @cached_property
+    def relationship_type(self) -> List[str]:
+        # choices: ["Monogamy", "Ethical non-monogamy", "Polyamory",
+        # "Open relationship", "Polyamory", "Open to exploring"]
+        for descriptor in self.selected_descriptors:
+            if descriptor.get("section_name") == "Relationship Type":
+                return [cs["name"] for cs in descriptor.get("choice_selections", [])]
+        return []
+
+    def is_monogamous(self) -> bool:
+        return "Monogamy" in self.relationship_type
+
+    def is_enm(self) -> bool:
+        return "Ethical non-monogamy" in self.relationship_type
+
+    def is_polyamorous(self) -> bool:
+        return "Polyamory" in self.relationship_type
+
+    def is_open_relationship(self) -> bool:
+        return "Open relationship" in self.relationship_type
+
+    def is_open_to_exploring(self) -> bool:
+        return "Open to exploring" in self.relationship_type
 
 
 # documentation here: https://github.com/fbessez/Tinder
